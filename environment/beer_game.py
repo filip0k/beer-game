@@ -1,8 +1,7 @@
 import pickle
 
 import gym
-
-from environment.agent import Agent
+from agent import Agent
 
 
 class BeerGame(gym.Env):

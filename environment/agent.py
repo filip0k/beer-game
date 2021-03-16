@@ -1,4 +1,4 @@
-from environment.noise_generators import generate_uniform_noise
+from noise_generators import generate_uniform_noise
 
 
 class Agent:
