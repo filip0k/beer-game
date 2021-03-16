@@ -1,2 +1,5 @@
 .idea
 environment/__pycache__/
+beer_game_environment.egg-info
+build
+dist
