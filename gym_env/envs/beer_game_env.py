@@ -1,10 +1,10 @@
 import pickle
-
 import gym
-from agent import Agent
+from gym_env.envs.agent import Agent
 
 
 class BeerGame(gym.Env):
+    metadata = {'render.modes': ['human']}
 
     def __init__(self, n_agents=4, stock_cost=1, backlog_cost=2, generate_noise=True, n_iterations=5, agent_names=None):
         super(BeerGame, self).__init__()

@@ -1,4 +1,4 @@
-from noise_generators import generate_uniform_noise
+from gym_env.envs.noise_generators import generate_uniform_noise
 
 
 class Agent:
