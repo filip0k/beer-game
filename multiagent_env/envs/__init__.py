@@ -1,0 +1,1 @@
+from multiagent_env.envs.multiagent_beer_game_env import MultiAgentBeerGame

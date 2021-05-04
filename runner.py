@@ -1,6 +1,5 @@
 import numpy as np
-
-from environment.beer_game import BeerGame
+from gym_env.envs import BeerGame
 
 if __name__ == '__main__':
     beer_game = BeerGame(n_agents=4)
