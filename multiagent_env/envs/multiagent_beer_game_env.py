@@ -81,10 +81,11 @@ class MultiAgentBeerGame(MultiAgentEnv):
             self.iteration += 1
 
         for agent in self.agents:
-            obs[agent.name], rew[agent.name], done[agent.name], info[agent.name] = 0, self.reward(agent.name), self.done, {}
+            obs[agent.name], rew[agent.name], done[agent.name], info[agent.name] = 0, self.reward(
+                agent.name), self.done, {}
 
         done["__all__"] = self.done
-        self.render()
+        # self.render()
         return {agent.name: 0 for agent in self.agents}, \
                {agent.name: self.reward(agent.name) for agent in self.agents}, \
                dict.fromkeys(done, self.done), \
@@ -93,6 +94,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
     @override(gym.Env)
     def reset(self):
         print("\n" + "#" * 20 + "Restarting" + "#" * 20)
+        self.iteration = 0
         self.done = False
         for i, agent in enumerate(self.agents):
             agent.reset()
