@@ -1,9 +1,11 @@
 from gym_env.envs.noise_generators import generate_uniform_noise
+import numpy as np
 
 
 class Agent:
-    def __init__(self, name, stocks=10, backlogs=0, incoming_orders=0, incoming_deliveries=0, deliveries=0):
-        self.name = name
+    def __init__(self, name, stocks=10, backlogs=0, incoming_orders=0, incoming_deliveries=0, deliveries=0,
+                 observations_to_track=4):
+        self.name = str(name)
         self.stocks = stocks
         self.backlogs = backlogs
         self.demand = incoming_orders
@@ -11,6 +13,9 @@ class Agent:
         self.deliveries = deliveries
         self.cumulative_stock_cost = 0
         self.cumulative_backlog_cost = 0
+        self.observations_to_track = observations_to_track
+        self.last_observations = self.get_observations()
+        self.observations_length = len(self.last_observations)
         self.orders = list()
 
     def get_state(self):
@@ -24,6 +29,27 @@ class Agent:
             "cumulative_stock_cost ": self.cumulative_stock_cost,
             "cumulative_backlog_cost": self.cumulative_backlog_cost,
             "last_order": 0 if len(self.orders) == 0 else self.orders[-1]}
+
+    def get_last_observations(self):
+        n_saved_observations = self.__get_number_of_saved_observations()
+        if n_saved_observations < self.observations_to_track:
+            return np.tile(self.last_observations, self.observations_to_track - n_saved_observations + 1)
+        return self.last_observations
+
+    def __get_number_of_saved_observations(self):
+        return int(len(self.last_observations) / self.observations_length)
+
+    def append_last_observation(self):
+        n_saved_observations = self.__get_number_of_saved_observations()
+        # to keep the same observation shape
+        if n_saved_observations == self.observations_to_track:
+            self.last_observations[0] = self.get_observations()
+        else:
+            np.concatenate((self.last_observations, self.get_observations()))
+
+    def get_observations(self):
+        return np.array([self.stocks, self.backlogs, self.demand, self.incoming_deliveries, self.deliveries,
+                         self.cumulative_backlog_cost, self.cumulative_backlog_cost], dtype=np.float32)
 
     def reset(self):
         self.stocks = 10
