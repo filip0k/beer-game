@@ -10,24 +10,18 @@ from ray.rllib.utils import override
 class MultiAgentBeerGame(MultiAgentEnv):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, env_config):
-        n_agents = 4
-        stock_cost = 1
-        backlog_cost = 2
-        generate_noise = True
-        n_iterations = 7
-        agent_names = None
+    def __init__(self, config):
         super(MultiAgentBeerGame, self).__init__()
-        # number of entities in the chain
-        self.n_agents = n_agents
-        self.generate_noise = generate_noise
-        self.name_to_agent = agent_names if agent_names is not None else {i: Agent(i) for i in range(n_agents)}
+        self.n_agents = config.get("num_agents", 4)
+        self.stock_cost = config.get("stock_cost", 1)
+        self.backlog_cost = config.get("backlog_cost", 2)
+        self.n_iterations = config.get("n_iterations", 100)
+        self.agent_names = config.get("agent_names", None)
+        observations_to_track = config.get("observations_to_track", 4)
+        self.name_to_agent = self.agent_names if self.agent_names is not None else {
+            i: Agent(i, observations_to_track=observations_to_track) for i in range(self.n_agents)}
         # agent 0 is customers distributor
-        self.agents = [Agent(i) for i in range(n_agents)]
-        self.stock_cost = stock_cost
-        self.backlog_cost = backlog_cost
-        self.n_iterations = n_iterations
-        self.states = list()
+        self.agents = list(self.name_to_agent.values())
         self.iteration = 0
         self.done = False
 

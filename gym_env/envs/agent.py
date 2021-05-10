@@ -3,6 +3,8 @@ import numpy as np
 
 
 class Agent:
+    N_OBSERVATIONS = 7
+
     def __init__(self, name, stocks=10, backlogs=0, incoming_orders=0, incoming_deliveries=0, deliveries=0,
                  observations_to_track=4):
         self.name = str(name)
@@ -15,7 +17,7 @@ class Agent:
         self.cumulative_backlog_cost = 0
         self.observations_to_track = observations_to_track
         self.last_observations = self.get_observations()
-        self.observations_length = len(self.last_observations)
+        self.observations_length = self.N_OBSERVATIONS
         self.orders = list()
 
     def get_state(self):
