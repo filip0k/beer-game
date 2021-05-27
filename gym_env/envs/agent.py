@@ -10,6 +10,7 @@ class Agent:
         self.name = str(name)
         self.stocks = stocks
         self.backlogs = backlogs
+        self.step_backlog = backlogs
         self.demand = incoming_orders
         self.incoming_deliveries = incoming_deliveries
         self.deliveries = deliveries
@@ -35,7 +36,8 @@ class Agent:
     def get_last_observations(self):
         n_saved_observations = self.__get_number_of_saved_observations()
         if n_saved_observations < self.observations_to_track:
-            return np.concatenate((self.last_observations,np.tile(self.get_observations(),self.observations_to_track-n_saved_observations)))
+            return np.concatenate((self.last_observations,
+                                   np.tile(self.get_observations(), self.observations_to_track - n_saved_observations)))
         return self.last_observations
 
     def __get_number_of_saved_observations(self):
@@ -45,13 +47,13 @@ class Agent:
         n_saved_observations = self.__get_number_of_saved_observations()
         # to keep the same observation shape
         if n_saved_observations == self.observations_to_track:
-            self.last_observations[0] = self.get_observations()
+            self.last_observations[:self.N_OBSERVATIONS] = self.get_observations()
         else:
             self.last_observations = np.concatenate((self.last_observations, self.get_observations()))
 
     def get_observations(self):
         return np.array([self.stocks, self.backlogs, self.demand, self.incoming_deliveries, self.deliveries,
-                         self.cumulative_backlog_cost, self.cumulative_backlog_cost], dtype=np.float32)
+                         self.cumulative_stock_cost, self.cumulative_backlog_cost], dtype=np.float32)
 
     def reset(self):
         self.stocks = 10
@@ -64,7 +66,7 @@ class Agent:
         self.orders = list()
 
     def add_noise(self):
-        self.demand = generate_uniform_noise(5, 1500)
+        self.demand = generate_uniform_noise(5, 15)
 
     def to_string(self):
         return str(self.get_state())

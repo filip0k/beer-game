@@ -17,6 +17,11 @@ class MultiAgentBeerGame(MultiAgentEnv):
         self.backlog_cost = config.get("backlog_cost", 2)
         self.n_iterations = config.get("n_iterations", 100)
         self.agent_names = config.get("agent_names", None)
+        self.accumulate_backlog_cost = config.get("accumulate_backlog_cost", True)
+        self.accumulate_stock_cost = config.get("accumulate_stock_cost", True)
+        self.observation_space = config.get("observation_space", None)
+        self.action_space = config.get("action_space", None)
+        self.backlog_cost_threshold = config.get("backlog_cost_threshold", 1000)
         observations_to_track = config.get("observations_to_track", 4)
         self.name_to_agent = self.agent_names if self.agent_names is not None else {
             i: Agent(i, observations_to_track=observations_to_track) for i in range(self.n_agents)}
@@ -29,8 +34,12 @@ class MultiAgentBeerGame(MultiAgentEnv):
         pickle.dump(self, file)
 
     def reward(self, name):
-        agent = self.agents[int(name)]
-        return -(agent.cumulative_backlog_cost + agent.cumulative_stock_cost)
+        reward_sum = 0
+        for agent in self.agents:
+            backlog_cost = min(agent.cumulative_backlog_cost, self.backlog_cost_threshold)
+            stock_cost = min(agent.cumulative_stock_cost,self.backlog_cost_threshold)
+            reward_sum += (backlog_cost + stock_cost)
+        return -reward_sum
 
     @override(gym.Env)
     def step(self, action):
@@ -39,17 +48,13 @@ class MultiAgentBeerGame(MultiAgentEnv):
         # all_states = []
 
         for i, agent in enumerate(self.agents):
-            # agent_state = agent.get_state()
             agent.append_last_observation()
-            # all_states.append(agent_state)
-
-        # self.states.append(all_states)
 
         # update incoming deliveries
         for i, indent in enumerate(action.values()):
             # deliveries from last step are now delivered
             self.agents[i].deliveries = self.agents[i].incoming_deliveries
-            self.agents[i].incoming_deliveries = int(np.asscalar(indent))
+            self.agents[i].incoming_deliveries = np.ceil(np.asscalar(indent))
 
         # update agents state
         for i in range(self.n_agents):
@@ -66,6 +71,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
             current_agent.stocks -= demand_shipment
             leftover_demand = current_agent.demand - demand_shipment
             current_agent.backlogs += leftover_demand
+            current_agent.step_backlog = leftover_demand
             current_agent.cumulative_stock_cost += current_agent.stocks * self.stock_cost
             current_agent.cumulative_backlog_cost += current_agent.backlogs * self.backlog_cost
 
@@ -83,12 +89,12 @@ class MultiAgentBeerGame(MultiAgentEnv):
 
     @override(gym.Env)
     def reset(self):
-        print("\n" + "#" * 20 + "Restarting" + "#" * 20)
+        # print("\n" + "#" * 20 + "Restarting" + "#" * 20)
         self.done = False
         self.iteration = 0
         for i, agent in enumerate(self.agents):
             agent.reset()
-            print(agent.to_string())
+            # print(agent.to_string())
         return {agent.name: agent.get_last_observations().flatten() for agent in self.agents}
 
     def render(self, mode='human'):
