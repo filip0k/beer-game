@@ -40,8 +40,8 @@ class MultiAgent(gym.Env):
         # update incoming deliveries
         for i, indent in enumerate(action):
             # deliveries from last step are now delivered
-            self.agents[i].deliveries = self.agents[i].incoming_deliveries
-            self.agents[i].incoming_deliveries = indent
+            self.agents[i].deliveries = self.agents[i].output_demand
+            self.agents[i].output_demand = indent
 
         # update agents state
         for i in range(self.n_agents):
@@ -49,14 +49,14 @@ class MultiAgent(gym.Env):
             if i == 0:
                 self.agents[0].add_noise()
             else:
-                current_agent.demand = self.agents[i - 1].incoming_deliveries
+                current_agent.input_demand = self.agents[i - 1].output_demand
             current_agent.stocks += current_agent.deliveries
             backlog_shipment = min(current_agent.backlogs, current_agent.stocks)
             current_agent.backlogs -= backlog_shipment
             current_agent.stocks -= backlog_shipment
-            demand_shipment = min(current_agent.demand, current_agent.stocks)
+            demand_shipment = min(current_agent.input_demand, current_agent.stocks)
             current_agent.stocks -= demand_shipment
-            leftover_demand = current_agent.demand - demand_shipment
+            leftover_demand = current_agent.input_demand - demand_shipment
             current_agent.backlogs += leftover_demand
             current_agent.cumulative_stock_cost += current_agent.stocks * self.stock_cost
             current_agent.cumulative_backlog_cost += current_agent.backlogs * self.backlog_cost

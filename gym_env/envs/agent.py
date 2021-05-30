@@ -11,9 +11,10 @@ class Agent:
         self.stocks = stocks
         self.backlogs = backlogs
         self.step_backlog = backlogs
-        self.demand = incoming_orders
-        self.incoming_deliveries = incoming_deliveries
+        self.input_demand = incoming_orders
+        self.output_demand = incoming_deliveries
         self.deliveries = deliveries
+        self.step_shipment = 0
         self.cumulative_stock_cost = 0
         self.cumulative_backlog_cost = 0
         self.observations_to_track = observations_to_track
@@ -26,8 +27,8 @@ class Agent:
             "name": self.name,
             "stock": self.stocks,
             "backlog": self.backlogs,
-            "incoming orders": self.demand,
-            "incoming_deliveries": self.incoming_deliveries,
+            "incoming orders": self.input_demand,
+            "incoming_deliveries": self.output_demand,
             "deliveries": self.deliveries,
             "cumulative_stock_cost ": self.cumulative_stock_cost,
             "cumulative_backlog_cost": self.cumulative_backlog_cost,
@@ -52,21 +53,22 @@ class Agent:
             self.last_observations = np.concatenate((self.last_observations, self.get_observations()))
 
     def get_observations(self):
-        return np.array([self.stocks, self.backlogs, self.demand, self.incoming_deliveries, self.deliveries,
+        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.step_shipment,
                          self.cumulative_stock_cost, self.cumulative_backlog_cost], dtype=np.float32)
 
     def reset(self):
         self.stocks = 10
         self.backlogs = 0
-        self.demand = 0
-        self.incoming_deliveries = 0
+        self.input_demand = 0
+        self.output_demand = 0
         self.deliveries = 0
+        self.step_shipment = 0
         self.cumulative_stock_cost = 0
         self.cumulative_backlog_cost = 0
         self.orders = list()
 
     def add_noise(self):
-        self.demand = generate_uniform_noise(5, 15)
+        self.input_demand = generate_uniform_noise(5, 15)
 
     def to_string(self):
         return str(self.get_state())
