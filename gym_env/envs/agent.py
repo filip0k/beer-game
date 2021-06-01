@@ -3,14 +3,13 @@ import numpy as np
 
 
 class Agent:
-    N_OBSERVATIONS = 7
+    N_OBSERVATIONS = 5
 
     def __init__(self, name, stocks=10, backlogs=0, incoming_orders=0, incoming_deliveries=0, deliveries=0,
                  observations_to_track=4):
         self.name = str(name)
         self.stocks = stocks
         self.backlogs = backlogs
-        self.step_backlog = backlogs
         self.input_demand = incoming_orders
         self.output_demand = incoming_deliveries
         self.deliveries = deliveries
@@ -44,7 +43,7 @@ class Agent:
     def __get_number_of_saved_observations(self):
         return int(len(self.last_observations) / self.observations_length)
 
-    def append_last_observation(self):
+    def append_observation(self):
         n_saved_observations = self.__get_number_of_saved_observations()
         # to keep the same observation shape
         if n_saved_observations == self.observations_to_track:
@@ -53,8 +52,7 @@ class Agent:
             self.last_observations = np.concatenate((self.last_observations, self.get_observations()))
 
     def get_observations(self):
-        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.step_shipment,
-                         self.cumulative_stock_cost, self.cumulative_backlog_cost], dtype=np.float32)
+        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.step_shipment], dtype=np.float32)
 
     def reset(self):
         self.stocks = 10

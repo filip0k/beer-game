@@ -52,7 +52,6 @@ class MultiAgentBeerGame(MultiAgentEnv):
         # then update whole env state
         for i, current_agent in enumerate(self.agents):
             current_agent = self.agents[i]
-            current_agent.append_last_observation()
             # deliveries from last step are now delivered
             if i == len(action.values()) - 1:
                 current_agent.deliveries = current_agent.output_demand
@@ -64,19 +63,15 @@ class MultiAgentBeerGame(MultiAgentEnv):
                 current_agent.input_demand = self.agents[i - 1].output_demand
 
             current_agent.stocks += current_agent.deliveries
-            ## todo add demand shipment direct to backlog
+            current_agent.backlogs += current_agent.input_demand
             backlog_shipment = min(current_agent.backlogs, current_agent.stocks)
             current_agent.backlogs -= backlog_shipment
             current_agent.stocks -= backlog_shipment
-            demand_shipment = min(current_agent.input_demand, current_agent.stocks)
-            current_agent.stocks -= demand_shipment
-            leftover_demand = current_agent.input_demand - demand_shipment
-            current_agent.step_shipment = backlog_shipment + demand_shipment
-            current_agent.backlogs += leftover_demand
+            current_agent.step_shipment = backlog_shipment
             current_agent.backlogs = min(current_agent.backlogs, self.backlog_threshold)
-            current_agent.step_backlog = leftover_demand
             current_agent.cumulative_stock_cost = current_agent.stocks * self.stock_cost
             current_agent.cumulative_backlog_cost = current_agent.backlogs * self.backlog_cost
+            current_agent.append_observation()
 
         if self.iteration == self.n_iterations - 1:
             self.done = True
