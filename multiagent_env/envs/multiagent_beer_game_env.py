@@ -21,7 +21,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
         self.accumulate_stock_cost = config.get("accumulate_stock_cost", True)
         self.observation_space = config.get("observation_space", None)
         self.action_space = config.get("action_space", None)
-        self.backlog_cost_threshold = config.get("backlog_cost_threshold", 30)
+        self.backlog_threshold = config.get("backlog_threshold", 30)
         observations_to_track = config.get("observations_to_track", 4)
         self.name_to_agent = self.agent_names if self.agent_names is not None else {
             i: Agent(i, observations_to_track=observations_to_track) for i in range(self.n_agents)}
@@ -36,24 +36,24 @@ class MultiAgentBeerGame(MultiAgentEnv):
     def reward(self):
         reward_sum = 0
         for agent in self.agents:
-            backlog_cost = min(agent.cumulative_backlog_cost, self.backlog_cost_threshold)
-            agent.cumulative_backlog_cost = backlog_cost
-            stock_cost = min(agent.cumulative_stock_cost, self.backlog_cost_threshold)
-            agent.cumulative_stock_cost = stock_cost
-            reward_sum += backlog_cost + stock_cost
+            reward_sum += agent.cumulative_backlog_cost + agent.cumulative_stock_cost
         return -reward_sum
 
     @override(gym.Env)
     def step(self, action):
         # todo add sanity checks
         obs, rew, done, info = {}, {}, {}, {}
+        ## todo add explicit delay (env saves it in memory) - information has no delay, propagation of beer has delay 1
 
-        # update incoming deliveries
+        # first order a new amount
         for i, indent in enumerate(action.values()):
+            self.agents[i].output_demand = np.ceil(np.asscalar(indent)) + self.agents[i].input_demand
+
+        # then update whole env state
+        for i, current_agent in enumerate(self.agents):
             current_agent = self.agents[i]
             current_agent.append_last_observation()
             # deliveries from last step are now delivered
-            ## todo how to implement, deliveries are step_shipment from parent agent, but what with the last agent in the chain
             if i == len(action.values()) - 1:
                 current_agent.deliveries = current_agent.output_demand
             else:
@@ -64,6 +64,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
                 current_agent.input_demand = self.agents[i - 1].output_demand
 
             current_agent.stocks += current_agent.deliveries
+            ## todo add demand shipment direct to backlog
             backlog_shipment = min(current_agent.backlogs, current_agent.stocks)
             current_agent.backlogs -= backlog_shipment
             current_agent.stocks -= backlog_shipment
@@ -72,12 +73,10 @@ class MultiAgentBeerGame(MultiAgentEnv):
             leftover_demand = current_agent.input_demand - demand_shipment
             current_agent.step_shipment = backlog_shipment + demand_shipment
             current_agent.backlogs += leftover_demand
+            current_agent.backlogs = min(current_agent.backlogs, self.backlog_threshold)
             current_agent.step_backlog = leftover_demand
-            current_agent.cumulative_stock_cost += current_agent.stocks * self.stock_cost
-            current_agent.cumulative_backlog_cost += current_agent.backlogs * self.backlog_cost
-
-            # order a new amount
-            current_agent.output_demand = np.ceil(np.asscalar(indent)) + current_agent.backlogs
+            current_agent.cumulative_stock_cost = current_agent.stocks * self.stock_cost
+            current_agent.cumulative_backlog_cost = current_agent.backlogs * self.backlog_cost
 
         if self.iteration == self.n_iterations - 1:
             self.done = True
