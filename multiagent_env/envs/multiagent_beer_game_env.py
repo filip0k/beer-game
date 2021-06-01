@@ -46,6 +46,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
     def step(self, action):
         # todo add sanity checks
         obs, rew, done, info = {}, {}, {}, {}
+        ## todo add explicit delay (env saves it in memory) - information has no delay, propagation of beer has delay 1
 
         # first order a new amount
         for i, indent in enumerate(action.values()):
@@ -69,6 +70,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
             else:
                 current_agent.input_demand = self.agents[i - 1].output_demand
 
+            self.shipments.pop(self.iteration - 1, None)
             current_agent.stocks += int(current_agent.deliveries)
             current_agent.backlogs += current_agent.input_demand
             backlog_shipment = min(current_agent.backlogs, current_agent.stocks)
