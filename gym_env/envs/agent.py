@@ -36,8 +36,9 @@ class Agent:
     def get_last_observations(self):
         n_saved_observations = self.__get_number_of_saved_observations()
         if n_saved_observations < self.observations_to_track:
-            return np.concatenate((self.last_observations,
-                                   np.tile(self.get_observations(), self.observations_to_track - n_saved_observations)))
+            return np.concatenate(
+                (np.tile(self.N_OBSERVATIONS * [0], self.observations_to_track - n_saved_observations),
+                 self.last_observations))
         return self.last_observations
 
     def __get_number_of_saved_observations(self):
@@ -52,7 +53,8 @@ class Agent:
             self.last_observations = np.concatenate((self.last_observations, self.get_observations()))
 
     def get_observations(self):
-        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.step_shipment], dtype=np.float32)
+        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.step_shipment],
+                        dtype=np.float32)
 
     def reset(self):
         self.stocks = 10
@@ -66,7 +68,7 @@ class Agent:
         self.orders = list()
 
     def add_noise(self):
-        self.input_demand = generate_uniform_noise(5, 15)
+        self.input_demand = generate_uniform_noise(0, 15)
 
     def to_string(self):
         return str(self.get_state())

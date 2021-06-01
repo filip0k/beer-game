@@ -6,6 +6,8 @@ from gym_env.envs.agent import Agent
 from ray.rllib import MultiAgentEnv
 from ray.rllib.utils import override
 
+from collections import defaultdict
+
 
 class MultiAgentBeerGame(MultiAgentEnv):
     metadata = {'render.modes': ['human']}
@@ -27,6 +29,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
             i: Agent(i, observations_to_track=observations_to_track) for i in range(self.n_agents)}
         # agent 0 is customers distributor
         self.agents = list(self.name_to_agent.values())
+        self.shipments = defaultdict(lambda: {})
         self.iteration = 0
         self.done = False
 
@@ -36,38 +39,42 @@ class MultiAgentBeerGame(MultiAgentEnv):
     def reward(self):
         reward_sum = 0
         for agent in self.agents:
-            reward_sum += agent.cumulative_backlog_cost + agent.cumulative_stock_cost
+            reward_sum += int(agent.cumulative_backlog_cost + agent.cumulative_stock_cost)
         return -reward_sum
 
     @override(gym.Env)
     def step(self, action):
         # todo add sanity checks
         obs, rew, done, info = {}, {}, {}, {}
-        ## todo add explicit delay (env saves it in memory) - information has no delay, propagation of beer has delay 1
 
         # first order a new amount
         for i, indent in enumerate(action.values()):
-            self.agents[i].output_demand = np.ceil(np.asscalar(indent)) + self.agents[i].input_demand
+            if i == 0:
+                self.agents[i].output_demand = np.ceil(indent.item()) + self.agents[i].input_demand
+            else:
+                self.agents[i].output_demand = np.ceil(indent.item())
 
         # then update whole env state
         for i, current_agent in enumerate(self.agents):
             current_agent = self.agents[i]
             # deliveries from last step are now delivered
             if i == len(action.values()) - 1:
+                # factory gets the whole wanted amount
                 current_agent.deliveries = current_agent.output_demand
             else:
-                current_agent.deliveries = self.agents[i + 1].step_shipment
+                # other entities get the amount their predecessor produced in the last step
+                current_agent.deliveries = self.shipments.get(self.iteration - 1, {}).get(i + 1, 0)
             if i == 0:
                 current_agent.add_noise()
             else:
                 current_agent.input_demand = self.agents[i - 1].output_demand
 
-            current_agent.stocks += current_agent.deliveries
+            current_agent.stocks += int(current_agent.deliveries)
             current_agent.backlogs += current_agent.input_demand
             backlog_shipment = min(current_agent.backlogs, current_agent.stocks)
             current_agent.backlogs -= backlog_shipment
             current_agent.stocks -= backlog_shipment
-            current_agent.step_shipment = backlog_shipment
+            self.shipments[self.iteration][i] = backlog_shipment
             current_agent.backlogs = min(current_agent.backlogs, self.backlog_threshold)
             current_agent.cumulative_stock_cost = current_agent.stocks * self.stock_cost
             current_agent.cumulative_backlog_cost = current_agent.backlogs * self.backlog_cost
@@ -81,7 +88,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
         done["__all__"] = self.done
         obs = {agent.name: agent.get_last_observations().flatten() for agent in self.agents}
         rew = {agent.name: self.reward() for agent in self.agents}
-        done = dict.fromkeys(done, self.done)
+        done = dict.fromkeys(list(done.keys()) + list(self.name_to_agent.keys()), self.done)
         info = {agent.name: info for agent in self.agents}
         return obs, rew, done, info
 
