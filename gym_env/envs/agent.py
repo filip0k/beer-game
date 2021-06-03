@@ -13,7 +13,7 @@ class Agent:
         self.input_demand = incoming_orders
         self.output_demand = incoming_deliveries
         self.deliveries = deliveries
-        self.step_shipment = 0
+        self.leftover_demand = 0
         self.cumulative_stock_cost = 0
         self.cumulative_backlog_cost = 0
         self.observations_to_track = observations_to_track
@@ -48,12 +48,12 @@ class Agent:
         n_saved_observations = self.__get_number_of_saved_observations()
         # to keep the same observation shape
         if n_saved_observations == self.observations_to_track:
-            self.last_observations[:self.N_OBSERVATIONS] = self.get_observations()
+            self.last_observations[:self.N_OBSERVATIONS] = self.get_observations().flatten()
         else:
-            self.last_observations = np.concatenate((self.last_observations, self.get_observations()))
+            self.last_observations = np.concatenate((self.last_observations, self.get_observations().flatten()))
 
     def get_observations(self):
-        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.step_shipment],
+        return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.leftover_demand],
                         dtype=np.float32)
 
     def reset(self):
@@ -62,13 +62,13 @@ class Agent:
         self.input_demand = 0
         self.output_demand = 0
         self.deliveries = 0
-        self.step_shipment = 0
+        self.leftover_demand = 0
         self.cumulative_stock_cost = 0
         self.cumulative_backlog_cost = 0
         self.orders = list()
 
     def add_noise(self):
-        self.input_demand = generate_uniform_noise(0, 15)
+        self.input_demand = generate_uniform_noise(0, 15).item()
 
     def to_string(self):
         return str(self.get_state())
