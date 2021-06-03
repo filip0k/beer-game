@@ -48,9 +48,8 @@ class Agent:
         n_saved_observations = self.__get_number_of_saved_observations()
         # to keep the same observation shape
         if n_saved_observations == self.observations_to_track:
-            self.last_observations[:self.N_OBSERVATIONS] = self.get_observations().flatten()
-        else:
-            self.last_observations = np.concatenate((self.last_observations, self.get_observations().flatten()))
+            self.last_observations=self.last_observations[:-self.N_OBSERVATIONS]
+        self.last_observations = np.concatenate((self.last_observations, self.get_observations().flatten()))
 
     def get_observations(self):
         return np.array([self.stocks, self.backlogs, self.input_demand, self.output_demand, self.leftover_demand],

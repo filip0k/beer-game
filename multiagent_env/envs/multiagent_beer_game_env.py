@@ -48,13 +48,15 @@ class MultiAgentBeerGame(MultiAgentEnv):
         obs, rew, done, info = {}, {}, {}, {}
         ## todo add explicit delay (env saves it in memory) - information has no delay, propagation of beer has delay 1
 
+        print(action)
         # first order a new amount
         for i, indent in enumerate(action.values()):
             if i == 0:
-                self.agents[i].output_demand = np.ceil(indent.item()) + self.agents[i].input_demand
+                self.agents[i].output_demand = max(0, np.ceil(indent.item()) + self.agents[i].input_demand)
+                #print("input demand ", self.agents[i].input_demand)
             else:
-                self.agents[i].output_demand = np.ceil(indent.item())
-        print(action)
+                self.agents[i].output_demand = max(0,indent.item())
+            #print("output demand ", self.agents[i].output_demand)
         # then update whole env state
         for i, current_agent in enumerate(self.agents):
             current_agent = self.agents[i]
@@ -96,7 +98,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
         obs = {agent.name: agent.get_last_observations().flatten() for agent in self.agents}
         rew = {agent.name: self.reward() for agent in self.agents}
         done = dict.fromkeys(list(done.keys()) + list(self.name_to_agent.keys()), self.done)
-        info = {agent.name: info for agent in self.agents}
+        info = {agent.name: agent.name for agent in self.agents}
         return obs, rew, done, info
 
     @override(gym.Env)
