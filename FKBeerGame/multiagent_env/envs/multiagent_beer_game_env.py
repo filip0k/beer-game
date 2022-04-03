@@ -39,7 +39,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
     def reward(self):
         reward_sum = 0
         for agent in self.agents:
-            agent_cost = int(agent.cumulative_backlog_cost + agent.cumulative_stock_cost)
+            agent_cost = agent.cumulative_backlog_cost + agent.cumulative_stock_cost
             self.rewards[agent.name] += agent_cost
             reward_sum += agent_cost
         return -reward_sum
