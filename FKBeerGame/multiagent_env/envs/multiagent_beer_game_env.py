@@ -78,7 +78,7 @@ class MultiAgentBeerGame(MultiAgentEnv):
 
     def __update_input_demands(self, current_agent, i):
         if i == 0:
-            current_agent.add_noise()
+            current_agent.add_noise(self.iteration)
         else:
             current_agent.input_demand = self.agents[i - 1].output_demand
 
@@ -92,8 +92,8 @@ class MultiAgentBeerGame(MultiAgentEnv):
         current_agent.pending_orders += current_agent.output_demand - int(current_agent.deliveries)
         current_agent.backlogs = min(current_agent.backlogs, self.backlog_threshold)
         self.shipments[self.iteration][i] = step_shipment
-        current_agent.cumulative_stock_cost = current_agent.stocks * self.stock_cost
-        current_agent.cumulative_backlog_cost = current_agent.backlogs * self.backlog_cost
+        current_agent.cumulative_stock_cost = current_agent.stocks * self.stock_cost/200
+        current_agent.cumulative_backlog_cost = current_agent.backlogs * self.backlog_cost/200
         current_agent.append_observation()
 
     def __update_output_demands(self, action):

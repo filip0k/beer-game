@@ -25,6 +25,7 @@ class BeerGame(gym.Env):
         pickle.dump(self, file)
 
     def reward(self, name):
+        # agent = self.agents[int(name)]
         agent = self.agents[name]
         return -(agent.cumulative_backlog_cost + agent.cumulative_stock_cost)
 
@@ -49,7 +50,7 @@ class BeerGame(gym.Env):
         for i in range(self.n_agents):
             current_agent = self.agents[i]
             if i == 0:
-                self.agents[0].add_noise()
+                self.agents[0].add_noise(self.iteration)
             else:
                 current_agent.input_demand = self.agents[i - 1].output_demand
             current_agent.stocks += current_agent.deliveries
@@ -60,8 +61,8 @@ class BeerGame(gym.Env):
             current_agent.stocks -= demand_shipment
             leftover_demand = current_agent.input_demand - demand_shipment
             current_agent.backlogs += leftover_demand
-            current_agent.cumulative_stock_cost += current_agent.stocks * self.stock_cost
-            current_agent.cumulative_backlog_cost += current_agent.backlogs * self.backlog_cost
+            current_agent.cumulative_stock_cost += current_agent.stocks * self.stock_cost/200
+            current_agent.cumulative_backlog_cost += current_agent.backlogs * self.backlog_cost/200
 
         if self.iteration == self.n_iterations - 1:
             self.done = True

@@ -1,4 +1,4 @@
 numpy~=1.19.2
 gym~=0.18.0
-ray~=1.4.0
+ray[tune]~=1.4.0
 setuptools~=52.0.0

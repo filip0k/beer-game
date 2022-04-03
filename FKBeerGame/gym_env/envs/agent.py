@@ -1,4 +1,4 @@
-from gym_env.envs.noise_generators import generate_uniform_noise
+from gym_env.envs.noise_generators import generate_uniform_noise, generate_standard_noise
 import numpy as np
 
 
@@ -67,8 +67,9 @@ class Agent:
         self.cumulative_backlog_cost = 0
         self.orders = list()
 
-    def add_noise(self):
-        self.input_demand = generate_uniform_noise(self.noise_range[0], self.noise_range[1]).item()
+    def add_noise(self, iteration):
+        # self.input_demand = generate_uniform_noise(self.noise_range[0], self.noise_range[1]).item()
+        self.input_demand = generate_standard_noise(iteration)
 
     def to_string(self):
         return str(self.get_state())
