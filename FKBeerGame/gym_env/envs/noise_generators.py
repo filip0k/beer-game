@@ -10,7 +10,7 @@ def generate_uniform_noise(low, high, length=1):
 
 
 def generate_standard_noise(i):
-    if i > 4:
+    if i >= 4:
         return 8
     else:
         return 4
